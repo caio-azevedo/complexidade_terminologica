@@ -31,106 +31,22 @@ sapply(my_R_files, source)
 
 # Lendo os arquivos ----------------------------------------------------
 
-bp <- c("BPA","BPP")
-
 source("R/cad_cia.R")
+
+bp <- c("BPA","BPP")
+ano <- 2023
+comp_sample <- list()
 
 # Inicialize uma lista para armazenar os resultados
 
-dados <- read_dfp(2023, bp[1])
 
+for (i in 1:2) {
+  dados <- read_dfp(ano, bp[i])
+  comp_sample[[i]] <- create_comp_sample(dados)
+}
 
-# Número de empresas
-
-n_distinct(dados$DENOM_CIA)
-
-
-# Número de observações excluídas por Ordem_exerc igual a Penúltimo
-
-nrow(dados |> filter(ORDEM_EXERC == "PENÚLTIMO"))
-
-
-# Número de novas empresas de 2022 para 2023
-nrow(dados |> filter(ORDEM_EXERC=="ÚLTIMO") |>
-       distinct(DENOM_CIA)) -
-  nrow(dados |> filter(ORDEM_EXERC == "PENÚLTIMO") |>
-                                     distinct(DENOM_CIA))
-
-
-dados <- dados |>
-  filter(ORDEM_EXERC == "ÚLTIMO")
-
-
-# Quantidade de observações duplicadas
-
-nrow(dados |> filter(duplicated(dados)) |>
-       distinct())
-
-# Quantidade de empresas com observações duplicadas
-nrow(dados |> filter(duplicated(dados)) |>
-       distinct() |>
-       distinct(DENOM_CIA))
-
-# Quantidade de observações triplicadas
-nrow(dados |>
-       group_by(across(everything())) |>
-       filter(n() >= 3) |>
-       distinct() |>
-       ungroup())
-
-# Quantidade de empresas com observações triplicadas
-nrow(dados |>
-       group_by(across(everything())) |>
-       filter(n() >= 3) |>
-       distinct() |>
-       ungroup() |>
-       distinct(DENOM_CIA))
-
-
-# Retirando da base as informações duplicadas e triplicadas
-dados <- dados |>
-  distinct()
-
-# Adicionar setores de cada empresa
-cad_cia <- semi_join(cad_cia, dados, by = c("CD_CVM"))
-dados <- inner_join(dados, cad_cia)
-
-# Quantidade de empresas classificadas como Bancos
-nrow(dados |> filter(SETOR_ATIV == "Bancos") |>
-       distinct(DENOM_CIA))
-
-# Quantidade de observações das empresas classificadas como Bancos
-nrow(dados |> filter(SETOR_ATIV == "Bancos"))
-
-# Quantidade de observações da empresa Brazilian Finance e Real Estate
-nrow(dados |> filter(DENOM_CIA=="BRAZILIAN FINANCE E REAL ESTATE S.A."))
-
-# Quantidade de observações da empresa Sul 116 Participações
-nrow(dados |> filter(DENOM_CIA=="SUL 116 PARTICIPACOES S.A."))
-
-# Quantidade de observações da empresa XP Investimentos
-nrow(dados |> filter(DENOM_CIA=="XP INVESTIMENTOS S.A."))
-
-# Quantidade de observações da empresa XP Investimentos
-nrow(dados |> filter(DENOM_CIA=="CONSTRUTORA TENDA S.A.",
-                     DT_REFER=="2023-03-31"))
-
-
-# Remover os bancos e as 3 empresas da base principal
-dados <- dados |>
-  filter(SETOR_ATIV != "Bancos") |>
-  filter(!DENOM_CIA %in% c("BRAZILIAN FINANCE E REAL ESTATE S.A.",
-                           "SUL 116 PARTICIPACOES S.A.",
-                           "XP INVESTIMENTOS S.A.")) |>
-  filter(!(DT_REFER == "2023-03-31" & DENOM_CIA == "CONSTRUTORA TENDA S.A."))
-
-# Quantidade de contas diferentes
-contas <- dados |>
-  distinct(CD_CONTA) |>
-  pull()
-
-length(contas)
-
+comp_sample <- reduce(comp_sample, left_join, by = "Descrição")
+colnames(comp_sample) <- c("Descrição","Ativo","Passivo")
 
 
 # Criar data frame por conta

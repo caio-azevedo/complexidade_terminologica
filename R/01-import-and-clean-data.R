@@ -3,30 +3,21 @@ source("R/cad_cia.R")
 
 # Definição dos tipos de balanço
 bp <- c("BPA", "BPP")
+ano <- 2023
 
-# Definindo a função de criação de sumário
-create_summary <- function(dados, tipo) {
-  sumario <- tibble(
-    Descrição = c("Nº de empresas", "Nº de emp. com informações duplicadas",
-                  "Nº de emp. com informações triplicadas",
-                  "Nº de contas diferentes", "Nº de terminologias diferentes",
-                  "Média de terminologias por conta"),
-    Valor = c(
-      n_distinct(dados$DENOM_CIA),
-      n_distinct(dados %>% filter(duplicated(.)) %>% distinct(DENOM_CIA)),
-      n_distinct(dados %>% filter(duplicated(.)) %>% filter(duplicated(.)) %>% distinct(DENOM_CIA)),
-      n_distinct(dados$CD_CONTA),
-      n_distinct(dados %>% select(DS_CONTA, CD_CONTA) %>% distinct(DS_CONTA)),
-      round(n_distinct(dados %>% select(DS_CONTA, CD_CONTA) %>% distinct(DS_CONTA)) / n_distinct(dados$CD_CONTA), 2)
-    )
-  )
-  return(sumario)
+comp_sample <- list()
+for (i in 1:2) {
+  dados <- read_dfp(ano, bp[i])
+  comp_sample[[i]] <- create_comp_sample(dados)
 }
+
+comp_sample <- reduce(comp_sample, left_join, by = "Descrição")
+colnames(comp_sample) <- c("Descrição","Ativo","Passivo")
 
 # Processamento e geração de sumários
 dados_lista <- map(bp, ~ {
   # Leitura e filtragem dos dados
-  dados <- read_dfp(2023, .x) %>%
+  dados <- read_dfp(ano, .x) %>%
     filter(ORDEM_EXERC == "ÚLTIMO") %>%
     inner_join(semi_join(cad_cia, ., by = "CD_CVM"))
 
