@@ -6,6 +6,7 @@ tab2 <- list()
 for (i in 1:2) {
 
 tab2[[i]] <- ds_bp[[i]] |>
+  mutate("Cod"= tolower(Cod)) |>
   group_by(Cod) |>
   summarise("Freq"=n(),
             "uso"=sum(n)) |>
@@ -15,7 +16,7 @@ tab2[[i]] <- ds_bp[[i]] |>
 
 tab2 <- full_join(tab2[[1]], tab2[[2]], by = "Cod")
 tab2 <- arrange(tab2, Cod)
-tab2 <- tab2[c(16,21,18,19,24,28,26,27,31,34),]
+
 
 tab2 <- rename(tab2, "Terminologia"= 1, "Contas diferentes Ativo" = 2, "Uso Ativo" = 3,
                "Contas diferentes Passivo" = 4, "Uso Passivo" = 5)
