@@ -7,7 +7,7 @@ for (i in seq_along(bp)) {
   # Remover duplicadas
   dados <- dados |> distinct()
 
-  # Filtragem dos dados para resolver o problema com TC S.A.
+  # Filtragem dos dados para resolver o problema com TENDA S.A.
   dados_ <- dados |> filter(ORDEM_EXERC == "ÚLTIMO",
                             DENOM_CIA != "CONSTRUTORA TENDA S.A.")
 

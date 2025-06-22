@@ -25,11 +25,15 @@ dados_lista <- map(bp, ~ {
   # Segmentação dos dados em bancos e não bancos
   bancos <- dados %>% filter(SETOR_ATIV == "Bancos"| DENOM_CIA %in% c("BRAZILIAN FINANCE E REAL ESTATE S.A.",
                                                                       "SUL 116 PARTICIPACOES S.A.",
-                                                                      "XP INVESTIMENTOS S.A."))
+                                                                      "XP INVESTIMENTOS S.A.",
+                                                                      "BB SEGURIDADE PARTICIPAÇÕES S.A.",
+                                                                      "IRB - BRASIL RESSEGUROS S.A."))
   dados_nao_bancos <- dados %>% filter(SETOR_ATIV != "Bancos") %>%
     filter(!DENOM_CIA %in% c("BRAZILIAN FINANCE E REAL ESTATE S.A.",
                              "SUL 116 PARTICIPACOES S.A.",
-                             "XP INVESTIMENTOS S.A."))
+                             "XP INVESTIMENTOS S.A.",
+                             "BB SEGURIDADE PARTICIPAÇÕES S.A.",
+                             "IRB - BRASIL RESSEGUROS S.A."))
 
   # Salvamento dos dados processados
   write.xlsx(dados_nao_bancos, glue("data/dfp_corrigido_{.x}_con_2023.xlsx"))

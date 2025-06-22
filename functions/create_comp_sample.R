@@ -15,7 +15,9 @@ create_comp_sample <- function(dados) {
       "( - ) Setor de Atividade = “Bancos”",
       "( - ) Brazilian Finance e Real Estate S.A.",
       "( - ) Sul 116 Participações S.A.",
-      "( - ) XP Investimentos S.A."
+      "( - ) XP Investimentos S.A.",
+      "( - ) BB Seguridade Participações S.A.",
+      "( - ) IRB - Brasil Resseguros S.A."
     ),
     Valor = c(
       # 1. Empresas distintas no conjunto completo
@@ -53,9 +55,12 @@ create_comp_sample <- function(dados) {
       # 7. Ocorrências específicas de outras empresas
       nrow(dados_ultimo |> filter(DENOM_CIA == "BRAZILIAN FINANCE E REAL ESTATE S.A.")),
       nrow(dados_ultimo |> filter(DENOM_CIA == "SUL 116 PARTICIPACOES S.A.")),
-      nrow(dados_ultimo |> filter(DENOM_CIA == "XP INVESTIMENTOS S.A."))
-    )
+      nrow(dados_ultimo |> filter(DENOM_CIA == "XP INVESTIMENTOS S.A.")),
+      nrow(dados_ultimo |> filter(DENOM_CIA == "BB SEGURIDADE PARTICIPAÇÕES S.A.")),
+      nrow(dados_ultimo |> filter(DENOM_CIA == "IRB - BRASIL RESSEGUROS S.A."))
+      )
   )
 
   return(comp_sample)
 }
+

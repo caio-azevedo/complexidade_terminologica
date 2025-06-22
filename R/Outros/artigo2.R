@@ -30,9 +30,11 @@ sapply(my_R_files, source)
 
 
 # Lendo os arquivos ----------------------------------------------------
-
 bp <- c("BPA","BPP")
+ano <- 2023
+comp_sample <- list()
 df_list <- list()
+conta_origem <- list()
 
 source("R/cad_cia.R")
 
@@ -41,11 +43,22 @@ source("R/cad_cia.R")
 
 for (i in 1:2) {
   # Leia os dados
-  dados <- read_dfp(2023, bp[i])
+  dados <- read_dfp(ano, bp[i])
+
+  comp_sample[[i]] <- create_comp_sample(dados)
 
   # Filtrar dados e resolver problemas específicos
   dados <- dados |>
     filter(ORDEM_EXERC == "ÚLTIMO") |> distinct()
+
+  # Filtragem dos dados para resolver o problema com TENDA S.A.
+  dados_ <- dados |> filter(DENOM_CIA != "CONSTRUTORA TENDA S.A.")
+
+  tenda_sa  <- dados |> filter(DT_REFER == "2023-12-31",
+                               DENOM_CIA == "CONSTRUTORA TENDA S.A.")
+
+  # Combina os dados e armazena na lista
+  dados <- bind_rows(dados_, tenda_sa)
 
   # Adicionar setores
   cad_cia <- semi_join(cad_cia, dados, by = c("CD_CVM"))
@@ -56,14 +69,26 @@ for (i in 1:2) {
     filter(SETOR_ATIV == "Bancos" |
              DENOM_CIA %in% c("BRAZILIAN FINANCE E REAL ESTATE S.A.",
                               "SUL 116 PARTICIPACOES S.A.",
-                              "XP INVESTIMENTOS S.A."))
+                              "XP INVESTIMENTOS S.A.",
+                              "BB SEGURIDADE PARTICIPAÇÕES S.A.",
+                              "IRB - BRASIL RESSEGUROS S.A."))
 
   # Remover bancos da base principal
   dados <- dados |>
     filter(SETOR_ATIV != "Bancos") |>
     filter(!DENOM_CIA %in% c("BRAZILIAN FINANCE E REAL ESTATE S.A.",
                              "SUL 116 PARTICIPACOES S.A.",
-                             "XP INVESTIMENTOS S.A."))
+                             "XP INVESTIMENTOS S.A.",
+                             "BB SEGURIDADE PARTICIPAÇÕES S.A.",
+                             "IRB - BRASIL RESSEGUROS S.A."))
+
+
+
+  conta_origem[[i]] <- dados |>
+    filter(nchar(CD_CONTA) == 7) |>
+    select(CD_CONTA, DS_CONTA) |>
+    count(CD_CONTA,DS_CONTA,name="frequencia") |>
+    select(-3)
 
   # Quantidade de contas diferentes
   contas <- dados |>
@@ -105,28 +130,74 @@ for (i in 1:2) {
 # Após o loop, combine os resultados em um único data frame, se necessário
 base <- bind_rows(df_list)
 
-rm(list = setdiff(ls(),"base"))
+comp_sample <- reduce(comp_sample, left_join, by = "Descrição")
+colnames(comp_sample) <- c("Descrição","Ativo","Passivo")
 
-base <- base |>
+rm(list = setdiff(ls(),c("base","conta_origem","comp_sample")))
+
+conta_origem <- rbind(conta_origem[[1]],conta_origem[[2]])
+colnames(conta_origem) <- c("cod_origem","origem")
+
+df <- base |>
+  mutate(cod_origem = substr(Cod, 1, 7)) |>
+  left_join(conta_origem, by = "cod_origem")|>
   mutate(df = factor(case_when(
-    substr(Cod,1,1)=="1" ~ "ativo",
-    substr(Cod,1,1)=="2" ~ "passivo"
-  )),.before = terminologias) |>
-  mutate(circ = factor(case_when(
-    substr(Cod,4,4)=="1" ~ "circulante",
-    substr(Cod,4,4)=="2" ~ "não circulante",
-    substr(Cod,4,4)=="3" ~ "PL"
-  )),.before = terminologias) |>
-  mutate(grupo = ifelse(terminologias < 5 & empresas > 400,FALSE,TRUE),.before = terminologias) |>
-  mutate(nivel = as.factor(nivel)) |>
-  mutate(bp = factor(paste(df,circ)))
+      substr(Cod, 1, 1) == "1" ~ "ativo",
+      substr(Cod, 1, 1) == "2" ~ "passivo"
+    ))
+  )
 
 
+
+sumario_1 <- df |>
+  group_by(cod_origem, origem, df) |>
+  reframe(
+    Freq = n(),
+    "Prop Quarto Nível" = sum(nivel == "Quatro") / n(),
+    "Prop Quinto Nível" = sum(nivel == "Cinco") / n(),
+    Média = mean(terminologias, na.rm = TRUE),
+    "Desvio Padrão" = sd(terminologias, na.rm = TRUE),
+    Mínimo = min(terminologias, na.rm = TRUE),
+    Máximo = max(terminologias, na.rm = TRUE),
+    "Primeiro quartil" = quantile(terminologias, probs = 0.25, na.rm = TRUE),
+    Mediana = median(terminologias, na.rm = TRUE),
+    "Terceiro quartil" = quantile(terminologias, probs = 0.75, na.rm = TRUE)
+  )
+
+sumario_2 <- df |>
+  group_by(nivel, df) |>
+  reframe(
+    Freq = n(),
+    Média = mean(terminologias, na.rm = TRUE),
+    "Desvio Padrão" = sd(terminologias, na.rm = TRUE),
+    Mínimo = min(terminologias, na.rm = TRUE),
+    Máximo = max(terminologias, na.rm = TRUE),
+    "Primeiro quartil" = quantile(terminologias, probs = 0.25, na.rm = TRUE),
+    Mediana = median(terminologias, na.rm = TRUE),
+    "Terceiro quartil" = quantile(terminologias, probs = 0.75, na.rm = TRUE)
+  )
+
+sumario_3 <- df |>
+  group_by(df) |>
+  reframe(
+    Freq = n(),
+    "Prop Quarto Nível" = sum(nivel == "Quatro") / n(),
+    "Prop Quinto Nível" = sum(nivel == "Cinco") / n(),
+    Média = mean(terminologias, na.rm = TRUE),
+    "Desvio Padrão" = sd(terminologias, na.rm = TRUE),
+    Mínimo = min(terminologias, na.rm = TRUE),
+    Máximo = max(terminologias, na.rm = TRUE),
+    "Primeiro quartil" = quantile(terminologias, probs = 0.25, na.rm = TRUE),
+    Mediana = median(terminologias, na.rm = TRUE),
+    "Terceiro quartil" = quantile(terminologias, probs = 0.75, na.rm = TRUE)
+  )
 
 
 # Salvando ----------------------------------------------------------------
 
-#openxlsx::write.xlsx(df,"data/df_BPA_art2.xlsx")
+openxlsx::write.xlsx(sumario_1,"data/sumario_1.xlsx")
+openxlsx::write.xlsx(sumario_2,"data/sumario_2.xlsx")
+openxlsx::write.xlsx(sumario_3,"data/sumario_3.xlsx")
 
 
 #Pacotes utilizados
