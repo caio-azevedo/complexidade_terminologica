@@ -71,7 +71,7 @@ tab5[[i]] <- df[[i]] |>
   select(-c(n, ramificacao, nomenclatura))
 }
 
-tab5 <- rbind(tab5[[1]][1:5,],tab5[[2]][1:3,])
+tab5 <- rbind(tab5[[1]],tab5[[2]])
 
 tab5 <- rename(tab5, "Cod." = 1, "Empresas" = 2, "Terminologias" = 3)
 
@@ -87,7 +87,7 @@ for (i in 1:2) {
     select(-c(n, ramificacao, nomenclatura))
 }
 
-tab6 <- rbind(tab6[[1]][1:5,],tab6[[2]][1:3,])
+tab6 <- rbind(tab6[[1]],tab6[[2]])
 
 tab6 <- rename(tab6, "Cod." = 1, "Empresas" = 2, "Terminologias" = 3)
 
