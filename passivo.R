@@ -1,5 +1,4 @@
 # Pacotes -----------------------------------------------------------------
-
 library(tidyverse)
 library(openxlsx)
 library(extrafont)
@@ -15,12 +14,8 @@ library(GetFREData)
 library(oneinfl)
 library(fastDummies)
 
-
-
 # Limpando ----------------------------------------------------------------
-
 rm(list=ls())
-
 
 # list functions ----------------------------------------------------------
 my_R_files <- list.files(path ="functions", pattern = '*.R',
@@ -29,55 +24,19 @@ my_R_files <- list.files(path ="functions", pattern = '*.R',
 # Load all functions in R  ------------------------------------------------
 sapply(my_R_files, source)
 
-
-# Tema gráfico ------------------------------------------------------------
-extrafont::loadfonts()
-
-fonte <- "Times New Roman"
-
-
-tema <- ggthemes::theme_hc() +
-  theme(axis.title = element_text(
-    family = fonte,
-    face = "bold",
-    size = 26
-  ),
-  axis.text = element_text(
-    family = fonte,
-    size = 20
-  ),
-  plot.caption = element_text(
-    family = fonte,
-    face = "bold",
-    size = 20,
-    hjust = 1
-  ),
-  legend.text = element_text(
-    family = fonte,
-    face = "bold",
-    size = 20
-  ),
-  legend.title = element_text(
-    family = fonte,
-    size = 20 ))
-
-
 # Lendo os arquivos ----------------------------------------------------
 bp <- c("BPA","BPP")
 ano <- 2023
 comp_sample <- list()
 df_list <- list()
 conta_origem <- list()
-
 source("R/cad_cia.R")
 
 # Inicialize uma lista para armazenar os resultados
-
-
 for (i in 1:2) {
-  # Leia os dados
-  dados <- read_dfp(ano, bp[i])
 
+    # Leia os dados
+  dados <- read_dfp(ano, bp[i])
   comp_sample[[i]] <- create_comp_sample(dados)
 
   # Filtrar dados e resolver problemas específicos
@@ -86,7 +45,6 @@ for (i in 1:2) {
 
   # Filtragem dos dados para resolver o problema com TENDA S.A.
   dados_ <- dados |> filter(DENOM_CIA != "CONSTRUTORA TENDA S.A.")
-
   tenda_sa  <- dados |> filter(DT_REFER == "2023-12-31",
                                DENOM_CIA == "CONSTRUTORA TENDA S.A.")
 
@@ -114,9 +72,6 @@ for (i in 1:2) {
                              "XP INVESTIMENTOS S.A.",
                              "BB SEGURIDADE PARTICIPAÇÕES S.A.",
                              "IRB - BRASIL RESSEGUROS S.A."))
-
-
-
   conta_origem[[i]] <- dados |>
     filter(nchar(CD_CONTA) == 7) |>
     select(CD_CONTA, DS_CONTA) |>
@@ -140,10 +95,8 @@ for (i in 1:2) {
   x <- df_bpa |>
     group_by(Cod) |>
     summarise(empresas = sum(n))
-
   y <- df_bpa |>
     count(Cod)
-
   df <- left_join(x, y)
 
   # Adicionar nível e filtrar
@@ -162,26 +115,19 @@ for (i in 1:2) {
 
 # Após o loop, combine os resultados em um único data frame, se necessário
 base <- bind_rows(df_list)
-
 comp_sample <- reduce(comp_sample, left_join, by = "Descrição")
 colnames(comp_sample) <- c("Descrição","Ativo","Passivo")
-
-rm(list = setdiff(ls(),c("base","conta_origem","comp_sample", "tema")))
-
+rm(list = setdiff(ls(),c("base","conta_origem","comp_sample")))
 conta_origem <- rbind(conta_origem[[1]],conta_origem[[2]])
 colnames(conta_origem) <- c("cod_origem","origem")
-
 df <- base |>
   mutate(cod_origem = substr(Cod, 1, 7)) |>
   left_join(conta_origem, by = "cod_origem")|>
   mutate(df = factor(case_when(
-      substr(Cod, 1, 1) == "1" ~ "ativo",
-      substr(Cod, 1, 1) == "2" ~ "passivo"
-    ))
+    substr(Cod, 1, 1) == "1" ~ "ativo",
+    substr(Cod, 1, 1) == "2" ~ "passivo"
+  ))
   )
-
-
-
 sumario_1 <- df |>
   group_by(cod_origem, origem, df) |>
   reframe(
@@ -196,7 +142,6 @@ sumario_1 <- df |>
     Mediana = median(terminologias, na.rm = TRUE),
     "Terceiro quartil" = quantile(terminologias, probs = 0.75, na.rm = TRUE)
   )
-
 sumario_2 <- df |>
   group_by(nivel, df) |>
   reframe(
@@ -209,7 +154,6 @@ sumario_2 <- df |>
     Mediana = median(terminologias, na.rm = TRUE),
     "Terceiro quartil" = quantile(terminologias, probs = 0.75, na.rm = TRUE)
   )
-
 sumario_3 <- df |>
   group_by(df) |>
   reframe(
@@ -225,159 +169,89 @@ sumario_3 <- df |>
     "Terceiro quartil" = quantile(terminologias, probs = 0.75, na.rm = TRUE)
   )
 
+mediana <- sumario_1 |>
+  select(1,Mediana, Média) |>
+  mutate(AT = ifelse(str_sub(cod_origem,1,1)=="1","Sim","Não")) |>
+  filter(AT == "Não") |>
+  select(-AT) |>
+  mutate(PL = ifelse(str_sub(cod_origem,3,4)=="03","Sim","Não")) |>
+  filter(PL == "Não") |>
+  select(-PL)
+
 df <- df |>
   mutate(prop = terminologias/empresas, .before = terminologias)
 
+df_passivo <- df |>
+  filter(df=="passivo") |>
+  mutate(circ=ifelse(str_sub(Cod,3,4)=="01","pc","npc"),.before = nivel) |>
+  mutate(origem=paste(origem,circ," ")) |>
+  select(-circ) |>
+  mutate(PL = ifelse(str_sub(Cod,3,4)=="03","Sim","Não")) |>
+  filter(PL == "Não") |>
+  select(-PL) |>
+  left_join(mediana) |>
+  mutate(dist_med = terminologias - Mediana)
 
-df_ativo <- df |>
-  filter(df=="ativo")
+
 
 # Clusterização ----
 set.seed(5)
-cluster <- df_ativo |>
-  select(3:5)
-
+cluster <- df_passivo |>
+  select(3:5,9:11)
 cluster_padronizado <- as.data.frame(scale(cluster[,]))
-
 cluster_kmeans <- kmeans(cluster_padronizado,
                          centers = 4)
-
-df_ativo$cluster_K <- factor(cluster_kmeans$cluster)
-
-fig1 <- df_ativo |>
+df_passivo$cluster_K <- factor(cluster_kmeans$cluster)
+df_passivo |>
   ggplot()+
   aes(x = empresas, y = terminologias,
       color = cluster_K)+
   geom_point(size=5) +
-  scale_x_continuous(breaks=seq(0,450,50)) +
+  scale_x_continuous(breaks=seq(0,180,30)) +
   ggthemes::scale_color_hc() +
   labs(y = "Qtde de terminologias utilizadas",
-       x = "Qtde de empresas") +
-  ggthemes::scale_color_hc() + tema
+       x = "Qtde de empresas")
 
-#------------------------------------------
+df_passivo <- dummy_cols(df_passivo, select_columns = "origem",
+                         remove_first_dummy = FALSE,
+                         remove_selected_columns = FALSE)
 
+colnames(df_passivo) <- c("Cod", "nível", "num_emp", "prop", "comp_term", "cod_origem",
+                          "origem", "natureza", "mediana", "media", "dist_med",
+                          "cluster_K",
+                          "emp_fin_pnc",
+                          "emp_fin_pc", "fornec", "luc_rec_aprop", "obr_fisc", "obr_soc_trab",
+                          "outras_obr_pnc", "outras_obr_pc",
+                          "panc_vend_pnc", "panc_vend_pc", "prov_pnc", "prov_pc",
+                           "trib_def")
 
-df_ativo <- dummy_cols(df_ativo, select_columns = "origem",
-                    remove_first_dummy = FALSE,
-                    remove_selected_columns = FALSE)
+df_passivo <- dummy_cols(df_passivo, select_columns = "cluster_K",
+                         remove_first_dummy = FALSE,
+                         remove_selected_columns = FALSE)
 
-colnames(df_ativo) <- c("Cod", "nível", "num_emp", "prop", "comp_term", "cod_origem",
-                        "origem", "natureza", "cluster_K",
-                        "aplic_fin", "arlp", "atv_bio", "caixa", "cli_rec",
-                        "desp_ant",
-                        "est", "imob", "intang", "invest", "out_atv_circ",
-                        "trib_rec")
-
-df_ativo <- dummy_cols(df_ativo, select_columns = "cluster_K",
-                       remove_first_dummy = FALSE,
-                       remove_selected_columns = FALSE)
-
-df_ativo <- df_ativo |>
+df_passivo <- df_passivo |>
   mutate(nível=ifelse(nível=="Quatro",FALSE,TRUE))
 
-
-# Salvando ----------------------------------------------------------------
-
-#openxlsx::write.xlsx(sumario_1,"data/sumario_1.xlsx")
-#openxlsx::write.xlsx(sumario_2,"data/sumario_2.xlsx")
-#openxlsx::write.xlsx(sumario_3,"data/sumario_3.xlsx")
-
-
-
-
-#Visualização da distribuição da variável dependente
-fig2 <- df_ativo |>
-  ggplot() +
-  geom_histogram(aes(x = comp_term, fill = after_stat(count)),
-                 bins = 15, color = "black", boundary = 0.5) +
-  labs(x = "Número de terminologias",
-       y = "Frequência") + tema + theme(legend.position = "none")
-
-
-formula_OIZTNB <- comp_term ~ log(num_emp) + out_atv_circ +  arlp + caixa +
-  cli_rec+ cluster_K_4 + cluster_K_3  + cluster_K_1 | cluster_K_2
+formula_OIZTNB <- comp_term ~  -1 + log(num_emp) + fornec +
+  emp_fin_pc + cluster_K_1 + outras_obr_pnc + outras_obr_pc  +
+  mediana| cluster_K_3 + cluster_K_2
 
 OIZTNB <- oneinfl(formula_OIZTNB,
-                  df_ativo, dist="negbin")
+                  df_passivo, dist="negbin")
 
 summary(OIZTNB)
 
 OIPP <- oneinfl(formula_OIZTNB,
-                  df_ativo, dist="Poisson")
+                  df_passivo, dist="Poisson")
 
 summary(OIPP)
 
 
-oneLRT(OIZTNB, OIPP)
-oneWald(OIPP)
-signifWald(OIZTNB, "cluster_K_2")
-
-library(overdisp)
-overdisp(x = df_ativo,
-         dependent.position = 5,
-         predictor.position = c(3,12,13,14,20,22,24,25))
-
-
-formula_ZTNB <- comp_term ~ log(num_emp) + out_atv_circ +  arlp  +
-  cli_rec + caixa + cluster_K_4 + cluster_K_3  + cluster_K_1
-
+formula_ZTNB <- comp_term ~  -1 + log(num_emp) + fornec +
+  emp_fin_pc + cluster_K_3 + outras_obr_pnc + outras_obr_pc  +
+  prov_pc
 
 ZTNB <- truncreg(formula_ZTNB,
-                 df_ativo, dist="negbin")
+                 df_passivo, dist="negbin")
+
 summary(ZTNB)
-PP <- truncreg(formula_ZTNB,
-                 df_ativo, dist="Poisson")
-
-summary(PP)
-
-oneplot(PP, OIPP, ZTNB, OIZTNB, df=df_ativo,
-        maxpred=30, ylimit=100)
-
-
-margins(OIZTNB, df_ativo, at = "EM")
-
-
-prev_ZTNB   <- predict(ZTNB, df = df_ativo, type = "count")
-prev_PP   <- predict(PP, df = df_ativo, type = "count")
-prev_OIZTNB <- predict(OIZTNB, df= df_ativo, type = "response")
-prev_OIPP  <- predict(OIPP, df = df_ativo, type = "response")
-
-
-# Montar data.frame
-df_plot <- data.frame(
-  observado = df_ativo$comp_term,
-  ZTNB      = prev_ZTNB,
-  PP = prev_PP,
-  OIZTNB    = prev_OIZTNB,
-  OIPP     = prev_OIPP
-)
-
-
-# Transforma para formato longo para facilitar ggplot
-library(tidyr)
-df_long <- pivot_longer(df_plot, cols = -observado, names_to = "modelo", values_to = "previsto")
-
-fig3 <- ggplot(df_long, aes(x = observado, y = previsto)) +
-  geom_point(alpha = 0.4) +
-  geom_smooth(formula = y ~x , method = "lm", se = FALSE, color = "red", linewidth = 1.5) +
-  facet_wrap(~ modelo) +
-  theme_minimal() +
-  labs(x = "Observado", y = "Predito")  + tema
-
-
-# Salvando os gráficos ----------------------------------------------------
-
-lista_g <- list()
-lista_fig <- list(fig1,fig2,fig3)
-
-for (i in 1:3) {
-  nome <- paste0("BPA_fig", i)
-  lista_g <- c(lista_g, nome)
-}
-
-purrr::walk2(lista_fig, lista_g,
-             ~ ggsave(plot = .x,
-                      filename = glue('Figuras/BPA/{.y}.png'),
-                      dpi = 200,
-                      width = 16, height = 10))
