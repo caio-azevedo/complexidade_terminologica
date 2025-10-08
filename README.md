@@ -7,9 +7,10 @@ Repositório dos scripts utilizados no desenvolvimento do artigo "A despadroniza
 
 ## Resumo
 
-Este estudo visa analisar a diversidade terminológica existente nos Balanços Patrimoniais das empresas de capital aberto no Brasil a partir dos atuais padrões baseados em princípios, bem como avaliar de que forma a flexibilidade contábil e a diversificação excessiva de rubricas impactam a clareza das demonstrações contábeis das empresas brasileiras de capital aberto. Sua fundamentação teórica está delineada no debate entre padrões baseados em regras ou princípios que está diretamente relacionado à discussão sobre uniformidade versus flexibilidade nas normas contábeis e seus efeitos na comparabilidade das informações contábeis, sem defender quais dos padrões é ideal, reconhecendo a complexidade do tema. Emprega uma abordagem híbrida combinando revisão bibliográfica com técnicas estatísticas. Tendo os dados sido extraídos diretamente dos relatórios financeiros na CVM para o ano de 2022, utilizando programação em R, que permitiu a coleta de um amplo conjunto de dados, incluindo 453 empresas, resultando em 30.391 observações de ativos e 52.512 observações de passivos. A análise revelou uma alta diversidade terminológica nos níveis mais detalhados do plano de contas, com até 167 e 256 variações de termos para o mesmo código de conta, para ativo e passivo respectivamente. Esses resultados evidenciam a necessidade de um maior equilíbrio na adoção de padrões baseados em regras e princípios, de forma a promover uma padronização terminológica mais consistente. Isso contribuiria para minimizar a assimetria informacional, facilitando a interpretação e comparação dos dados por parte dos usuários, e, consequentemente, aprimorando a qualidade das decisões econômicas que se baseiam nessas informações.
+Este estudo investiga a complexidade terminológica dos Balanços Patrimoniais de companhias abertas brasileiras, analisando em que medida as características estruturais e classificatórias das contas explicam a variabilidade de nomenclaturas observada, mesmo sob um mesmo referencial normativo. A pesquisa fundamenta-se no debate entre regras e princípios, em que a flexibilidade normativa amplia o espaço para heterogeneidade terminológica. Nesse contexto, discute-se o paradoxo contábil: códigos padronizados que convivem com descrições divergentes, comprometendo a comparabilidade e a compreensibilidade das informações financeiras. Adotou-se uma abordagem híbrida, combinando revisão bibliográfica e análise estatística. Os dados foram extraídos das Demonstrações Financeiras Padronizadas (DFPs) de 450 empresas listadas na CVM em 2023, totalizando 30.392 observações de ativos e 52.502 de passivos, processados por meio de programação em R. Os resultados evidenciam elevada diversidade terminológica, sobretudo nos níveis mais detalhados do plano de contas, com até 167 variações de termos em contas do ativo e 259 em contas do passivo para um mesmo código. Esses achados revelam que a padronização formal não tem sido suficiente para assegurar consistência terminológica. Do ponto de vista prático, os resultados oferecem subsídios para reguladores, auditores e investidores aprimorarem a clareza e a comparabilidade das demonstrações financeiras, contribuindo para a redução de assimetrias informacionais. No campo acadêmico, o estudo amplia a discussão sobre linguagem contábil ao explorar a relação entre a estrutura do plano de contas e a qualidade da informação contábil. 
 
-**Palavras-chave:** Demonstrações Financeiras Padronizadas; Terminologia Contábil; Comparabilidade; Padronização Contábil.
+
+**Palavras-chave:** Demonstrações Financeiras Padronizadas; Terminologia Contábil; Semiótica; Código Contábil.
 
 
 ## Autores:
@@ -58,9 +59,9 @@ Antes de executar os scripts, certifique-se de ter instalado:
    Para usuários com conta no Github: utilize o comando abaixo para clonar o repositório via Git:
    
    ```bash
-   git clone https://github.com/caio-azevedo/DFP.git
+   git clone https://github.com/caio-azevedo/complexidade_terminologica.git
    ```
-   Para usuários que não utilizam o Github: baixe o repositório clicando [aqui](https://github.com/caio-azevedo/DFP/archive/refs/heads/master.zip).
+   Para usuários que não utilizam o Github: baixe o repositório clicando [aqui](https://github.com/caio-azevedo/complexidade_terminologica/archive/refs/heads/main.zip).
 
 2. **Abra o Projeto:**
 
