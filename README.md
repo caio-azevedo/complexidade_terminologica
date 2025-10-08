@@ -16,18 +16,18 @@ Este estudo visa analisar a diversidade terminológica existente nos Balanços P
 
 * Lorrane Almeida de Sousa
 
-Bacharela em Ciências Contábeis pela Universidade Federal do Delta do Parnaíba (UFDPar), Brasil.
+Mestranda em Ciências Contábeis pela Universidade Federal do Rio de Janeiro, Brasil.
 
-E-mail: lorrane.sousa@ufdpar.edu.br
+E-mail: lorrane.sousa@ufrj.br
 
 ORCID(https://orcid.org/0009-0006-1625-0049)
 
 
 * Caio Oliveira Azevedo
 
-Mestre em Economia Aplicada pela Universidade Federal da Paraíba (UFPB), Brasil.
+Professor Substituto na Universidade Federal de São Carlos (UFSCar), Brasil.
 
-E-mail: caio.azevedo@live.com
+E-mail: caio.azevedo@ufscar.br
 
 ORCID(https://orcid.org/0000-0002-7296-4939)
 
